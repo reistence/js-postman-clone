@@ -1,6 +1,7 @@
 import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
+import prettyBytes from "pretty-bytes";
 
 const form = document.querySelector("[data-form]");
 const queryParamsContainer = document.querySelector("[data-query-params]");
@@ -9,6 +10,10 @@ const requestHeadersContainer = document.querySelector(
 );
 const keyValueTemplate = document.querySelector("[data-key-value-template]");
 // console.log(keyValueTemplate);
+
+const responseHeadersContainer = document.querySelector(
+  "[data-response-headers]"
+);
 
 document
   .querySelector("[data-add-query-param-btn]")
@@ -25,6 +30,23 @@ document
 queryParamsContainer.append(createKeyValuePair());
 requestHeadersContainer.append(createKeyValuePair());
 
+//intercept axios errors
+axios.interceptors.request.use((req) => {
+  req.customData = req.customData || {};
+  req.customData.startTime = new Date().getTime();
+  return req;
+});
+
+axios.interceptors.response.use(updateEndTime, (e) => {
+  return Promise.reject(updateEndTime(e.response));
+});
+
+function updateEndTime(res) {
+  res.customData = res.customData || {};
+  res.customData.time = new Date().getTime() - res.config.customData.startTime;
+  return res;
+}
+
 form.addEventListener("submit", (e) => {
   e.preventDefault();
   axios({
@@ -32,10 +54,39 @@ form.addEventListener("submit", (e) => {
     method: document.querySelector("[data-method]").value,
     params: keyValuePairsToObject(queryParamsContainer),
     headers: keyValuePairsToObject(requestHeadersContainer),
-  }).then((res) => {
-    console.log(res);
-  });
+  })
+    .catch((err) => err)
+    .then((res) => {
+      console.log(res);
+      document
+        .querySelector("[data-response-section]")
+        .classList.remove("d-none");
+      updateResponseDetails(res);
+      // updateResponseEditor(res.data);
+      updateResponseHeaders(res.headers);
+    });
 });
+
+function updateResponseHeaders(headers) {
+  responseHeadersContainer.innerHTML = "";
+  Object.entries(headers).forEach(([key, value]) => {
+    const keyElement = document.createElement("div");
+    keyElement.textContent = key;
+    responseHeadersContainer.append(keyElement);
+
+    const valueElement = document.createElement("div");
+    valueElement.textContent = value;
+    responseHeadersContainer.append(valueElement);
+  });
+}
+
+function updateResponseDetails(res) {
+  document.querySelector("[data-status]").textContent = res.status;
+  document.querySelector("[data-time]").textContent = res.customData.time;
+  document.querySelector("[data-size]").textContent = prettyBytes(
+    JSON.stringify(res.data).length + JSON.stringify(res.headers).length
+  );
+}
 
 function createKeyValuePair() {
   const element = keyValueTemplate.content.cloneNode(true);
@@ -52,8 +103,7 @@ function keyValuePairsToObject(container) {
     const key = pair.querySelector("[data-key]").value;
     const value = pair.querySelector("[data-value]").value;
 
-    if (key === "") {
-      return { ...data, [key]: value };
-    }
+    if (key === "") return data;
+    return { ...data, [key]: value };
   }, {});
 }
