@@ -1,0 +1,41 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 100%;
+  font-family: "Rubik", sans-serif;
+}
+
+body {
+  background-color: black !important;
+  color: white !important;
+}
+
+input {
+  background-color: black !important;
+  color: white !important ;
+}
+
+input:focus {
+  border: 1px solid red !important;
+}
+select {
+  background-color: black !important;
+  color: white !important;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  width: 100%;
+}
