@@ -2,6 +2,7 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import prettyBytes from "pretty-bytes";
+// import setupEditors from "./setupEditor";
 
 const form = document.querySelector("[data-form]");
 const queryParamsContainer = document.querySelector("[data-query-params]");
@@ -47,6 +48,8 @@ function updateEndTime(res) {
   return res;
 }
 
+// const { requestEditor, updateResponseEditor } = setupEditors();
+
 form.addEventListener("submit", (e) => {
   e.preventDefault();
   axios({
@@ -62,10 +65,15 @@ form.addEventListener("submit", (e) => {
         .querySelector("[data-response-section]")
         .classList.remove("d-none");
       updateResponseDetails(res);
-      // updateResponseEditor(res.data);
+      updateResponseEditor(res.data);
       updateResponseHeaders(res.headers);
     });
 });
+
+function updateResponseEditor(data) {
+  document.querySelector("[data-json-response-body]").textContent =
+    JSON.stringify(data, null, 2);
+}
 
 function updateResponseHeaders(headers) {
   responseHeadersContainer.innerHTML = "";
